@@ -1,0 +1,66 @@
+service: rest-api-crud
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  stage: dev
+  environment:
+    TABLE_NAME: NotesTable
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:*
+      Resource:
+        - arn:aws:dynamodb:us-east-1:*:table/NotesTable
+
+functions:
+  createNote:
+    handler: src/create.handler
+    events:
+      - http:
+          path: notes
+          method: post
+
+  getNote:
+    handler: src/read.handler
+    events:
+      - http:
+          path: notes/{id}
+          method: get
+
+  updateNote:
+    handler: src/update.handler
+    events:
+      - http:
+          path: notes/{id}
+          method: put
+
+  deleteNote:
+    handler: src/delete.handler
+    events:
+      - http:
+          path: notes/{id}
+          method: delete
+
+  listNotes:
+    handler: src/list.handler
+    events:
+      - http:
+          path: notes
+          method: get
+
+resources:
+  Resources:
+    NotesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: NotesTable
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
