@@ -3,33 +3,39 @@ name: Deploy to AWS
 on:
   push:
     branches:
-      - main
+      - main  # Cambia si tu rama principal es diferente
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      # 1. Descargar el código
+      - name: Checkout code
+        uses: actions/checkout@v3
 
+      # 2. Instalar Node.js (versión estable)
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: 18
 
-      - name: Install Serverless CLI
+      # 3. Instalar Serverless Framework v3 (evita el login obligatorio de v4)
+      - name: Install Serverless CLI v3
         run: npm install -g serverless@3
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
+      # 4. Instalar dependencias del proyecto
       - name: Install dependencies
         run: npm install
 
-      - name: Deploy to AWS
+      # 5. Configurar credenciales de AWS desde los Secrets de GitHub
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1 # Cambia si usas otra región
+
+      # 6. Desplegar con Serverless
+      - name: Deploy with Serverless
         run: serverless deploy --stage dev
