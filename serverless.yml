@@ -1,45 +1,51 @@
-name: Deploy to AWS
+service: serverless-crud-api
 
-on:
-  push:
-    branches:
-      - main  # Cambia si tu rama principal es diferente
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  environment:
+    DYNAMODB_TABLE: notesTable
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+functions:
+  createNote:
+    handler: createNote.handler
+    events:
+      - http:
+          path: notes
+          method: post
 
-    steps:
-      # 1. Descargar el código
-      - name: Checkout code
-        uses: actions/checkout@v3
+  getNote:
+    handler: getNote.handler
+    events:
+      - http:
+          path: notes/{id}
+          method: get
 
-      # 2. Instalar Node.js
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
+  updateNote:
+    handler: updateNote.handler
+    events:
+      - http:
+          path: notes/{id}
+          method: put
 
-      # 3. Instalar Serverless CLI v3 (evita login obligatorio de v4)
-      - name: Install Serverless CLI v3
-        run: npm install -g serverless@3
+  deleteNote:
+    handler: deleteNote.handler
+    events:
+      - http:
+          path: notes/{id}
+          method: delete
 
-      # 4. Verificar versión instalada (para asegurarnos que NO es v4)
-      - name: Check Serverless version
-        run: serverless --version
-
-      # 5. Instalar dependencias del proyecto
-      - name: Install dependencies
-        run: npm install
-
-      # 6. Configurar credenciales de AWS
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1 # cámbiala si usas otra
-
-      # 7. Desplegar con Serverless v3
-      - name: Deploy with Serverless
-        run: serverless deploy --stage dev
+resources:
+  Resources:
+    NotesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: notesTable
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
